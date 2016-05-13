@@ -1,0 +1,173 @@
+##########################################################
+#Declare Variables tu use throughout the script
+
+#Number of samples used when generating pseudodata
+n_events_pd=10
+
+# if data file exists, please specify its name below and place the file in a directory called data
+data_file_name=./OS_data.root
+
+#Please specify the name of the histograms of signal, background, and data if there is one
+bkgHistName=DiJetMass
+sigHistName=DiJetMass
+datHistname=DiJetMass
+
+#Declare what type of calculator will be used to calculate p-values: Asymptotic (Chi2 distribution) or Frequentist (Monte Carlo)
+    # type = 0 Freq calculator: Generate toys using nuisance parameter at their conditional ML estimate ( θ = θ_hat) by fitting them to the observed data. Treat constraint terms in the likelihood (e.g. systematic errors) as auxiliary measurements. introduce global observables which will be varied (tossed) for each pseudo-experiment
+    #  type = 1 Hybrid calculator: Nuisance parameters are integrated using their pdf (the constraint term) which is interpreted as a Bayesian prior
+    #  type = 2 Asymptotic calculator, sólo se puede con one sided limits
+    #  type = 3 Asymptotic calculator using nominal Asimov data sets (not using fitted parameter values but nominal ones)
+
+calculator=0
+
+#Number of toys to be used if the frequentist calculator is chosen
+nToys=5000
+
+#Declare the type of statistic to be used on the hypotheses tests for discovery 
+    #    t_stat_type = 0 LEP standard simple likelihood ratio L_{s+b}(mu=1)/L_{b}(mu=0)
+    #              = 1 Tevatron   ratio of profiled likelihood  L_{s+b}(mu=1,nu_hat)/L_{b}(mu=0,nu'_hat)
+    #              = 2 Profile Likelihood   \lambda(mu)=L_{s+b}(mu,nu_hat)/L_{b}(mu_hat,nu'_hat)
+    #              = 3 Profile Likelihood one sided (i.e. = 0 if mu_hat < 0)
+
+t_stat_type=2
+
+#Declare the type of statistic to be used on the hypotheses tests for exclusion
+    # t_stat_type_excl = 0 LEP  standard simple likelihood ratio L_{s+b}(mu=1)/L_{b}(mu=0)
+    #                  = 1 Tevatron   ratio of profiled likelihood  L_{s+b}(mu=1,nu_hat)/L_{b}(mu=0,nu'_hat)
+    #                  = 2 Profile Likelihood two sided  \lambda(mu)=L_{s+b}(mu,nu_hat)/L_{b}(mu_hat,nu'_hat)
+    #                  = 3 Profile Likelihood one sided (i.e. = 0 if mu < mu_hat)
+    #                  = 4 Profile Likelihood signed ( pll = -pll if mu < mu_hat)
+    #                  = 5 Max Likelihood Estimate as test statistic
+    #                  = 6 Number of observed event as test statistic
+
+t_stat_type_excl=5
+
+##########################################################
+
+##FROM HERE THE SCRIPT STARTS CREATING THE NECESSARY FILES
+
+#Create the total backgrounnd .root file from all background histograms
+cd background
+if [ -s "./bkg.root" ]; then # the if statement checks if the file already exists, if it does, it deletes it and creates again
+        rm bkg.root
+        hadd -f bkg.root *.root
+else
+        hadd -f bkg.root *.root
+fi
+
+#Move to the results directory, and copy and replace bkg.root
+cp bkg.root ../results/
+
+#Store the name of the total backround .root on 
+background=./bkg.root
+
+#Store the name of signal files to use later on the script for hypotheses tests
+cd ..
+cd signal
+ls *.root > signal_files
+
+#cat signal_files
+#The for loop is used to store in each subsequent position of the array the names of the different signal histograms
+i=0;
+for j in `cat signal_files` 
+do
+	array[$i]=./$j; 
+	#echo "The name of signal file number $i is: ${array[$i]} "u;  
+	i=$(($i+1));  
+done 
+
+#Copy all signal files to results
+cp *.root ../results
+cd ..
+
+#Check if a directory and file of data exist, if ti does, store its name on the position 1 of the array 
+#else generate a pseudo data file
+
+if [ -d "data" ] || [ -d "Data" ]; then #Checks if the directory data exists
+	cd data
+	
+	if [ -s ${data_file_name} ]; then #Checks if the name of the data given exists
+		arrayData[0]=$data_file_name
+		cp $data_file_name ../results
+	else
+		#Create directory for pseudoData
+		cd ..	
+		dataHistName=PseudoData
+		if [ -d "pseudoData" ]; then	 
+			rm -r pseudoData
+			mkdir pseudoData
+		else
+			mkdir pseudoData
+		fi
+
+		#Generate Pseudo Data in results
+   	     	cd results
+		ls ../signal/*.root > signal_files
+		i=0
+		for j in `cat signal_files`
+		do
+			hadd PD_$i.root bkg.root $j;  
+			root -l -b -q 'generatePseudoData.C("./PD_'$i'.root","'$bkgHistName'",'$n_events_pd',"./PsD_'$i'.root");'
+			rm PD_$i.root
+			arrayData[$i]=./PsD_$i.root
+			#echo "The name of pseudo data file number $i is: ${arrayData[$i]} ";
+        		i=$(($i+1));
+		done   
+		cp PsD*.root ../pseudoData
+	fi
+else
+                #Create directory for pseudoData
+                dataHistName=PseudoData
+		if [ -d "pseudoData" ]; then
+                        rm -r pseudoData
+                        mkdir pseudoData
+                else
+                        mkdir pseudoData
+                fi
+
+		cd results
+                ls ../signal/*.root > signal_files
+                i=0
+                for j in `cat signal_files`
+                do
+                        hadd PD_$i.root bkg.root $j;
+                        root -l -b -q 'generatePseudoData.C("./PD_'$i'.root","'$bkgHistName'",'$n_events_pd',"./PsD_'$i'.root");'
+                        rm PD_$i.root
+                        arrayData[$i]=./PsD_$i.root
+                        #echo "The name of pseudo data file number $i is: ${arrayData[$i]} ";
+                        i=$(($i+1));
+                done
+		cp PsD*.root ../pseudoData
+fi
+
+#Carry out the Hypotheses Tests on each of the files. 
+#When running the HypotestDemo and HypoTestInvDemo at the end of the root macro, it will append the new calculated data at the end of a Root file 
+
+i=0
+k=0
+for j in "${array[@]}"
+do
+	if [ $i == 0 ]; then
+		root -l -b -q 'histHypoTest.C("'${arrayData[k]}'","'$dataHistName'","'$background'","'$bkgHistName'","'${array[i]}'","'$sigHistName'",'$calculator','$t_stat_type','$nToys',"hypoTestGraph'$i'.root",true)';
+        else
+		root -l -b -q 'histHypoTest.C("'${arrayData[k]}'","'$dataHistName'","'$background'","'$bkgHistName'","'${array[i]}'","'$sigHistName'",'$calculator','$t_stat_type','$nToys',"hypoTestGraph'$i'.root",false)';
+	fi
+	i=$(($i+1));	
+	if [ ${#arrayData[@]} -gt 1 ]; then
+		k=$(($k+1));
+	fi  	 
+done
+
+#Clean files created
+rm bkg.root
+rm test2.root
+i=0 
+for j in "${arrayData[@]}"
+do
+	rm ${arrayData[i]}	
+	i=$(($i+1));
+done
+rm sig*.root
+rm signal_files
+
+#clear
