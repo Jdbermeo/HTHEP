@@ -37,8 +37,8 @@ using namespace RooStats;
 
 using namespace RooFit;
 
-void generatePseudoData(const char *fileName="./bkg.root",
-                        const char *histName="DiJetMass",
+void generatePseudoData(const char *fileName="./salida.root",
+                        const char *histName="jet_pt",
                         int Nevents= 100,
                         const char *fileNameOutput="./pseudoData.root") {
 
@@ -52,10 +52,11 @@ void generatePseudoData(const char *fileName="./bkg.root",
     
     Int_t mean_i; // The mean rounded to the nearest integer to store as the pseudodata point
     
-    
+    Int_t first =1; //To create it for the first time
+ 
     // Canvas on which evertyhing will be plotted
     TCanvas* Histograma_Importado = new TCanvas("Histograma_Importado","Histograma_Importado",800,800) ;
-    Histograma_Importado->Divide(2,2) ;
+    Histograma_Importado->Divide(1,2) ;
     Histograma_Importado->cd(1) ;
     
     
@@ -74,11 +75,11 @@ void generatePseudoData(const char *fileName="./bkg.root",
     
     // EXAMPLE OF THE PDF GENERATED FOR BIN 5 AND THE DATA GENERATED FROM IT
     
-    // Obtain the value of the current bin and generate
-    n_bini_i = h_pseuDS->GetBinContent(3) ;
+    /*// Obtain the value of the current bin and generate
+    n_bini_i = h_pseuDS->GetBinContent(20) ;
     sprintf(namePdf,"Gaussian::p(x[0,%f],mu[%f],sigma[%f])",5.0*n_bini_i,n_bini_i,sqrt(n_bini_i));
     w.factory(namePdf);
-    
+   
     // Graph the PDF generated from the bin
     Histograma_Importado->cd(2) ;
     RooPlot* xframe2 = w::x.frame(Name("xframe2"),Title("PDF to generate pseudo data for bin 3")) ;
@@ -93,53 +94,68 @@ void generatePseudoData(const char *fileName="./bkg.root",
     xframe3->Draw();
     
     // Generate all the pseudodata
-    
+   */ 
     for (int i = 1; i<h_pseuDS->GetXaxis()->GetNbins(); i++) {
         
         //Obtain the value of the current bin
         n_bini_i = h_pseuDS->GetBinContent(i) ;
     
         if(n_bini_i!=0){
-        
-            //Define a Gaussian function with n_bini_i as its mean, and sqrt(n_bini_i) as sigma
-            w::x.setMax(5.0*n_bini_i) ;
-            w::mu.setVal(n_bini_i);
-            w::sigma.setVal(sqrt(n_bini_i));
-            RooDataSet* obsData = w::p.generate(w::x,Nevents) ;
+ 		
+		if(first == 1){
+			n_bini_i = h_pseuDS->GetBinContent(i) ;
+	    		sprintf(namePdf,"Gaussian::p(x[0,%f],mu[%f],sigma[%f])",5.0*n_bini_i,n_bini_i,sqrt(n_bini_i));
+	    		w.factory(namePdf);
+			first = 0;
+          	}
 
-            //Calculate mean of data generated
-            mean = obsData->mean(w::x) ;
-            mean_i = TMath::Nint(mean) ;
+		else{
+       		     //Define a Gaussian function with n_bini_i as its mean, and sqrt(n_bini_i) as sigma
+            	   	w::x.setMax(5.0*n_bini_i) ;
+            		w::mu.setVal(n_bini_i);
+            		w::sigma.setVal(sqrt(n_bini_i));
+            		RooDataSet* obsData = w::p.generate(w::x,Nevents) ;
+
+         		//Calculate mean of data generated
+            		mean = obsData->mean(w::x) ;
+            		mean_i = TMath::Nint(mean) ;
             
-            //Calculate the standard deviation of the data created
-            sigma = obsData->sigma(w::x) ;
+            		//Calculate the standard deviation of the data created
+            		sigma = obsData->sigma(w::x) ;
         
-            //Store the mean and its associated error in the bin i
-            h_pseudoData->SetBinContent(i,mean_i);
-            h_pseudoData->SetBinError(i,sigma);
-        
+         		//Store the mean and its associated error in the bin i
+          		h_pseudoData->SetBinContent(i,mean_i);
+            		h_pseudoData->SetBinError(i,sigma);
+        	}
         }
         
         else{ //In the event that the content of the bin is zero, it has to use a diffent method to generate the pseudodata.
             
-            w::x.setMax(5.0) ;
-            w::mu.setVal(n_bini_i);
-            w::sigma.setVal(1.0);
-            RooDataSet* obsData = w::p.generate(w::x,Nevents) ;
+		if(first == 1){
+	    		sprintf(namePdf,"Gaussian::p(x[0,%f],mu[%f],sigma[%f])",5.0,0,sqrt(1));
+	    		w.factory(namePdf);
+			first = 0;
+          	}
+
+		else{
+            		w::x.setMax(5.0) ;
+            		w::mu.setVal(n_bini_i);
+      		      	w::sigma.setVal(1.0);
+     		       RooDataSet* obsData = w::p.generate(w::x,Nevents) ;
+     	       
+     		       //Calculate mean of data generated
+     		       mean = obsData->mean(w::x) ;
+     		       mean_i = TMath::Nint(mean) ;
             
-            //Calculate mean of data generated
-            mean = obsData->mean(w::x) ;
-            mean_i = TMath::Nint(mean) ;
-            
-            //Store the mean and its associated error in the bin i
-            h_pseudoData->SetBinContent(i,mean_i) ;
-            h_pseudoData->SetBinError(i,sqrt(mean_i)) ;
-            
-        }
+     		       //Store the mean and its associated error in the bin i
+     		       h_pseudoData->SetBinContent(i,mean_i) ;
+     		       h_pseudoData->SetBinError(i,sqrt(mean_i)) ;
+     		}       
+     	   }
     }
     
     // Draw the new histogram of pseudo data
-    Histograma_Importado->cd(4) ;
+    Histograma_Importado->cd(2) ;
     h_pseudoData->SetTitle("PseudoData") ;
     h_pseudoData->SetName("PseudoData") ;
     h_pseudoData->Draw() ;
