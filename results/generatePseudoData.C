@@ -41,6 +41,10 @@ void generatePseudoData(const char *fileName="./salida.root",
                         const char *histName="jet_pt",
                         int Nevents= 100,
                         const char *fileNameOutput="./pseudoData.root") {
+    gSystem->Load("libRooFit");
+    gSystem->Load("libRooFitCore");
+    gSystem->Load("libRooStats");
+    gSystem->Load("libRootAuth");
 
     char namePdf[50]; // Array in which we will store the characters to create the pdf that will generate the pseudodata for each bin
     
