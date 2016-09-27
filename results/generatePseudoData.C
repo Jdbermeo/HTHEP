@@ -38,6 +38,17 @@ using namespace RooStats;
 
 using namespace RooFit;
 
+/*
+    The purpose of this script is to generate pseudo-data by constructing a gaussian pdf with the content of each bin. The bin content is taken as the mean of the distibution, and its square root as its standard deviation. Then a number of points are sampled from the distribution and the sample mean and the sample standard deviation are then taken as the new bin content and new bin error. This procedure is then repeated for each of the bins inside the histogram given as reference.
+ 
+    The script takes as parameters the following:
+ 
+        fileName = The name of the root file which contains the histogram from which the pseudo-data will be generated. Usually this file should contain the addition of the histogram of the signal and the total background.
+        histName = It should be the name that the histogram has inside the previous .root file
+        Nevents = Number of points to be generated from the gaussian PDF that is contructed for each of the bins. 
+        fileNameOutput = Name of the file in which the generated pseudo-data histogram will be stored.
+ */
+
 void generatePseudoData(string fileName="./salida.root",
                         string  histName="jet_pt",
                         int Nevents= 100,
@@ -46,16 +57,9 @@ void generatePseudoData(string fileName="./salida.root",
     gSystem->Load("libRooFitCore");
     gSystem->Load("libRooStats");
     gSystem->Load("libRootAuth");
-    
-    cout << "Hello World"<<endl;
-    
-    cout << fileName << endl;
-    
-    cout << histName << endl;
-    
-    cout << fileNameOutput << endl;
 
-    char namePdf[50]; // Array in which we will store the characters to create the pdf that will generate the pseudodata for each bin
+    char namePdf[50]; // Array in which we will store the characters to create the pdf that will generate the pseudodata for each bin using the tool factory of the RooWorkSpace class.
+                        // RooWorkSpace is a class to use and create PDFs easily from a single type of object or class. 
     
     Double_t n_bini_i; // The content of each bin will be stored in this Double
     
@@ -86,9 +90,12 @@ void generatePseudoData(string fileName="./salida.root",
     // Create workspace to create Gaussian functions to generate the pseudodata on each point
     RooWorkspace w("w",1);
     
-    // EXAMPLE OF THE PDF GENERATED FOR BIN 5 AND THE DATA GENERATED FROM IT
     
-    /*// Obtain the value of the current bin and generate
+    /*
+     
+     // THIS BLOCK OF COMMENTEED CODE IS TO PLOT IN A CANVAS AN EXAMPLE OF THE PDF GENERATED FOR BIN 5 AND THE DATA GENERATED FROM IT, IN ORDER TO VISUALIZE HOW IT WORKS.
+     
+     // Obtain the value of the current bin and generate
     n_bini_i = h_pseuDS->GetBinContent(20) ;
     sprintf(namePdf,"Gaussian::p(x[0,%f],mu[%f],sigma[%f])",5.0*n_bini_i,n_bini_i,sqrt(n_bini_i));
     w.factory(namePdf);

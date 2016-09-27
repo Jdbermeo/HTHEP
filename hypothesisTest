@@ -1,13 +1,14 @@
 ##########################################################
 #Declare Variables tu use throughout the script
 
-#Number of samples used when generating pseudodata
-n_events_pd=10
+#The current version of the script does not generate pseudo-data, but instead adds the tota background and current signal file, and uses it as the pseudo-data or supossed experimental data to carry out the null hypothesis tests. 
+
+#The old file called hypothesisTestOld does generate pseudo-data, by constructing a gaussian pdf with the content of the bin. The bin content is taken as the mean of the distibution, and its square root as its standard deviation. Then a number of points are sampled from the distribution and the sample mean and the sample standard deviation are then taken as the new bin content and new bin error.  
 
 # if data file exists, please specify its name below and place the file in a directory called data
 data_file_name=./OS_data.root
 
-#Please specify the name of the histograms of signal, background, and data if there is one
+#Please specify the name that the histograms of signal, background, and data (if there is one) take within their respective .root files
 bkgHistName=transverse_mass_lumi
 sigHistName=transverse_mass_lumi
 datHistname=transverse_mass_lumi
@@ -66,7 +67,7 @@ cd ..
 cd signal
 ls *.root > signal_files
 
-#cat signal_files
+
 #The for loop is used to store in each subsequent position of the array the names of the different signal histograms
 i=0;
 for j in `cat signal_files` 
