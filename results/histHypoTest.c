@@ -35,6 +35,25 @@ using namespace RooStats;
 
 using namespace RooFit;
 
+/*
+ The purpose of this script is to generate pseudo-data by constructing a gaussian pdf with the content of each bin. The bin content is taken as the mean of the distibution, and its square root as its standard deviation. Then a number of points are sampled from the distribution and the sample mean and the sample standard deviation are then taken as the new bin content and new bin error. This procedure is then repeated for each of the bins inside the histogram given as reference.
+ 
+ The script takes as parameters the following (Please be aware that the values specified are dummy initializations, these parameters are redefined with whatever value you give to ithem when using the scrript):
+ 
+    dataFileName = The name of the root file which contains the histogram of the experimental data or pseudo-data.
+    dataHistName = It should be the name that the histogram has inside the .root file of the data, specified in the previous parameter
+    bkgFileName = The name of the root file which contains the histogram of the total background for the channel.
+    bkgHistName = It should be the name that the histogram has inside the .root file of the total background,specified in the previous parameter
+    sigFileName = The name of the root file which contains the histogram of the signal tested.
+    sigHistName = It should be the name that the histogram has inside the .root file of the signal, specified in the previous parameter
+    calculator = type of calculator to be used (i.e: Frequentist, Hybrid, asymptotic, etc.). A detailed description of each of these can be found on the "hypothesisTest" script or in the "RooStats for searches document".
+    statistic = Type of test statistic to be used in calculating the p-value.
+    nToys = If the frequentist calculator is to be used, then it specifies the number of samples to be drawn to carry out the hypothesis test.
+    hypoTestGraphFile = name of the file where the results of null hypothesis tests will be stored.
+    newHypoTest = If it is true, it means that a new root file to store the results must be created. If it is false, it means the file specified in hypoTestGraphFile must be accesed, and the reults for the new signal point must be appended in this file. It is mainly used by the hypothesisTest shell script
+ */
+
+
 void histHypoTest(string dataFileName="./PsD_0.root",
                   string dataHistName="PseudoData",
                   string bkgFileName="./bkg.root",
@@ -96,15 +115,20 @@ void histHypoTest(string dataFileName="./PsD_0.root",
     /////////  REQUIREMENTS: All the histograms must have the same number of bins
     /////////  Note that its objects have a categorization similar to their physical counterparts such as SAMPLE,
     /////////  CHANNEL, MEASURMENT
+    /////////
+    /////////  This step is necessary to be able to carry out the hypothesis tests using the calculators of the
+    /////////  Roostats package given the histograms for data, background, and signal.
         
     HistFactory::Measurement measurement("measurement", "measurement");
-    measurement.SetPOI("SigXsecOverSM"); //This Parameter is the same as /mu in profile likelihood. If set to zero it means it is the null hypothesis, and if it is one it is the signal + background. It is also used to fine the exclusion limits, by setting the significance and solving for this parameter.
+    measurement.SetPOI("SigXsecOverSM"); //This Parameter is the same as /mu in profile likelihood. If set to zero it means it is the null hypothesis. If it is mu=one, it is the signal + background hypothesis. It is also used to define the exclusion limits, by setting the significance at 0.05 and solving for this parameter.
 
     // Set the luminosity.
     // It is assumed that all histograms have been scaled by luminosity, though other forms may be used, and they are specified in the HistFactory guide.
     measurement.SetLumi(1.0);
+    
     // Set the uncertainty around the luminosity. In this cases it is gaussian
     measurement.SetLumiRelErr(0.10);
+    
     // For this analysis it is set constant, though it need not be set as such
     measurement.AddConstantParam("Lumi");
  
@@ -132,12 +156,14 @@ void histHypoTest(string dataFileName="./PsD_0.root",
     channel.AddSample(signal) ; // Add the SIGNAL to the channel
     channel.AddSample(BKG) ; // Add the BACKGROUND to the channel
     
-    // Add the created channel to the class measurement, from measurmente we can create the workspace that will contain the ModelConfig to carry out the hypotheses tests
+    // Add the created channel to the class measurement, from measurments we can create the workspace that will contain the ModelConfig to carry out the hypotheses tests.
     measurement.AddChannel(channel);
+    
+    //SIDE NOTE: Remember that modelConfig is an object in which all the important information that must be given to the Null hypothesis Calculators is stored. In other words, it is an object defined so that the Calclulators can be used more easily and uniformly.
     
     //measurement.CollectHistograms(); Por alguna razon cuando corre esta linea arroja el siguiente error: Error in <TFile::Open>: no url specified
 
-    // The following to lines create the workspace and a ModelConfig inside it.
+    // The following two lines create the workspace and a ModelConfig inside it.
     HistFactory::HistoToWorkspaceFactoryFast h2w(measurement) ;
     RooWorkspace* w = h2w.MakeCombinedModel(measurement) ;
     

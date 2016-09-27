@@ -41,7 +41,7 @@ using namespace RooFit;
 /*
     The purpose of this script is to generate pseudo-data by constructing a gaussian pdf with the content of each bin. The bin content is taken as the mean of the distibution, and its square root as its standard deviation. Then a number of points are sampled from the distribution and the sample mean and the sample standard deviation are then taken as the new bin content and new bin error. This procedure is then repeated for each of the bins inside the histogram given as reference.
  
-    The script takes as parameters the following:
+    The script takes as parameters the following (Please be aware that the values specified are dummy initializations, these parameters are redefined with whatever value you give to ithem when using the scrript):
  
         fileName = The name of the root file which contains the histogram from which the pseudo-data will be generated. Usually this file should contain the addition of the histogram of the signal and the total background.
         histName = It should be the name that the histogram has inside the previous .root file
