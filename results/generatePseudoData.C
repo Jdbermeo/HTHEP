@@ -1,6 +1,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "TFile.h"
 #include "RooWorkspace.h"
@@ -37,14 +38,22 @@ using namespace RooStats;
 
 using namespace RooFit;
 
-void generatePseudoData(const char *fileName="./salida.root",
-                        const char *histName="jet_pt",
+void generatePseudoData(string fileName="./salida.root",
+                        string  histName="jet_pt",
                         int Nevents= 100,
-                        const char *fileNameOutput="./pseudoData.root") {
+                        string fileNameOutput="./pseudoData.root") {
     gSystem->Load("libRooFit");
     gSystem->Load("libRooFitCore");
     gSystem->Load("libRooStats");
     gSystem->Load("libRootAuth");
+    
+    cout << "Hello World"<<endl;
+    
+    cout << fileName << endl;
+    
+    cout << histName << endl;
+    
+    cout << fileNameOutput << endl;
 
     char namePdf[50]; // Array in which we will store the characters to create the pdf that will generate the pseudodata for each bin
     
@@ -65,11 +74,11 @@ void generatePseudoData(const char *fileName="./salida.root",
     
     
    // Import the histogram from which the pseudodata will be generated
-    TFile* f_pseuDS = new TFile(fileName);  // File on which the histogram from which we will generate the pseudodata is stored
+    TFile* f_pseuDS = new TFile(fileName.c_str());  // File on which the histogram from which we will generate the pseudodata is stored
     
-    TH1* h_pseuDS = (TH1*)f_pseuDS->Get(histName); // Create a local Histogram from the histogram stored on the file
+    TH1* h_pseuDS = (TH1*)f_pseuDS->Get(histName.c_str()); // Create a local Histogram from the histogram stored on the file
     
-    f_pseuDS->Draw(); // Draw the original histogram from which the pseudodata will be created
+    //h_pseuDS->Draw(); // Draw the original histogram from which the pseudodata will be created
     
     // Create a copy of the original Histogram on which the pseudodata will be stored
     TH1* h_pseudoData = h_pseuDS->Clone();
@@ -99,19 +108,19 @@ void generatePseudoData(const char *fileName="./salida.root",
     
     // Generate all the pseudodata
    */ 
-    for (int i = 1; i<h_pseuDS->GetXaxis()->GetNbins(); i++) {
+    for (int i = 1; i<34; i++) {
         
         //Obtain the value of the current bin
         n_bini_i = h_pseuDS->GetBinContent(i) ;
     
         if(n_bini_i!=0){
  		
-		if(first == 1){
+            if(first == 1){
 			n_bini_i = h_pseuDS->GetBinContent(i) ;
 	    		sprintf(namePdf,"Gaussian::p(x[0,%f],mu[%f],sigma[%f])",5.0*n_bini_i,n_bini_i,sqrt(n_bini_i));
 	    		w.factory(namePdf);
 			first = 0;
-          	}
+            }
 
 		else{
        		     //Define a Gaussian function with n_bini_i as its mean, and sqrt(n_bini_i) as sigma
@@ -134,27 +143,7 @@ void generatePseudoData(const char *fileName="./salida.root",
         }
         
         else{ //In the event that the content of the bin is zero, it has to use a diffent method to generate the pseudodata.
-            
-		if(first == 1){
-	    		sprintf(namePdf,"Gaussian::p(x[0,%f],mu[%f],sigma[%f])",5.0,0,sqrt(1));
-	    		w.factory(namePdf);
-			first = 0;
-          	}
-
-		else{
-            		w::x.setMax(5.0) ;
-            		w::mu.setVal(n_bini_i);
-      		      	w::sigma.setVal(1.0);
-     		       RooDataSet* obsData = w::p.generate(w::x,Nevents) ;
-     	       
-     		       //Calculate mean of data generated
-     		       mean = obsData->mean(w::x) ;
-     		       mean_i = TMath::Nint(mean) ;
-            
-     		       //Store the mean and its associated error in the bin i
-     		       h_pseudoData->SetBinContent(i,mean_i) ;
-     		       h_pseudoData->SetBinError(i,sqrt(mean_i)) ;
-     		}       
+        
      	   }
     }
     
@@ -165,7 +154,7 @@ void generatePseudoData(const char *fileName="./salida.root",
     h_pseudoData->Draw() ;
     
     // Save the new hisotgram to a .root file
-    TFile* f_h_pseudoData = new TFile(fileNameOutput,"RECREATE") ;
+    TFile* f_h_pseudoData = new TFile(fileNameOutput.c_str(),"RECREATE") ;
     h_pseudoData->Write() ;
     f_h_pseudoData->Close() ;
     

@@ -8,9 +8,9 @@ n_events_pd=10
 data_file_name=./OS_data.root
 
 #Please specify the name of the histograms of signal, background, and data if there is one
-bkgHistName=DiJetMass
-sigHistName=DiJetMass
-datHistname=DiJetMass
+bkgHistName=transverse_mass_lumi
+sigHistName=transverse_mass_lumi
+datHistname=transverse_mass_lumi
 
 #Declare what type of calculator will be used to calculate p-values: Asymptotic (Chi2 distribution) or Frequentist (Monte Carlo)
     # type = 0 Freq calculator: Generate toys using nuisance parameter at their conditional ML estimate ( θ = θ_hat) by fitting them to the observed data. Treat constraint terms in the likelihood (e.g. systematic errors) as auxiliary measurements. introduce global observables which will be varied (tossed) for each pseudo-experiment
@@ -21,7 +21,7 @@ datHistname=DiJetMass
 calculator=0
 
 #Number of toys to be used if the frequentist calculator is chosen
-nToys=5000
+nToys=1000
 
 #Declare the type of statistic to be used on the hypotheses tests for discovery 
     #    t_stat_type = 0 LEP standard simple likelihood ratio L_{s+b}(mu=1)/L_{b}(mu=0)
@@ -92,7 +92,8 @@ if [ -d "data" ] || [ -d "Data" ]; then #Checks if the directory data exists
 	else
 		#Create directory for pseudoData
 		cd ..	
-		dataHistName=PseudoData
+		dataHistName=PseudoData #This variable is the name given to the pseudoData Histograms inside ofthe root file. 
+					#It is needed to run the hypothesisTest script, that requires the name of the pseudoData Histogram
 		if [ -d "pseudoData" ]; then	 
 			rm -r pseudoData
 			mkdir pseudoData
@@ -117,7 +118,8 @@ if [ -d "data" ] || [ -d "Data" ]; then #Checks if the directory data exists
 	fi
 else
                 #Create directory for pseudoData
-                dataHistName=PseudoData
+                dataHistName=PseudoData #This variable is the name given to the pseudoData Histograms inside of the root file.
+					#It is needed to run the HypothesisTest script, that requires the name of the pseudoData Histogram
 		if [ -d "pseudoData" ]; then
                         rm -r pseudoData
                         mkdir pseudoData

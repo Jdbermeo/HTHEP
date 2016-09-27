@@ -1,4 +1,4 @@
-// macro to fit Higgs to gg spectrum
+#include <string.h>
 #include "TFile.h"
 #include "RooWorkspace.h"
 #include "RooAbsPdf.h"
@@ -35,12 +35,12 @@ using namespace RooStats;
 
 using namespace RooFit;
 
-void histHypoTest(const char *dataFileName="./PsD_0.root",
-                  const char *dataHistName="PseudoData",
-                  const char *bkgFileName="./bkg.root",
-                  const char *bkgHistName="DiJetMass",
-                  const char *sigFileName="./sig1.root",
-                  const char *sigHistName="DiJetMass",
+void histHypoTest(string dataFileName="./PsD_0.root",
+                  string dataHistName="PseudoData",
+                  string bkgFileName="./bkg.root",
+                  string bkgHistName="DiJetMass",
+                  string sigFileName="./sig1.root",
+                  string sigHistName="DiJetMass",
                   int calculator = 0,
                   int statistic = 3,
                   int nToys=5000,
@@ -50,13 +50,13 @@ void histHypoTest(const char *dataFileName="./PsD_0.root",
 ////////////////////////////////////////////////////////////////////////////////////////////////
 /////              IMPORT HISTOGRAMS
 
-    TFile* f_sig = new TFile(sigFileName);
-    TFile* f_bkg = new TFile(bkgFileName);
-    TFile* f_data = new TFile(dataFileName);
+    TFile* f_sig = new TFile(sigFileName.c_str());
+    TFile* f_bkg = new TFile(bkgFileName.c_str());
+    TFile* f_data = new TFile(dataFileName.c_str());
 
-    TH1F* h_sig = (TH1F*)f_sig->Get(sigHistName);
-    TH1F* h_bkg = (TH1F*)f_bkg->Get(bkgHistName);
-    TH1F* h_data = (TH1F*)f_data->Get(dataHistName);
+    TH1F* h_sig = (TH1F*)f_sig->Get(sigHistName.c_str());
+    TH1F* h_bkg = (TH1F*)f_bkg->Get(bkgHistName.c_str());
+    TH1F* h_data = (TH1F*)f_data->Get(dataHistName.c_str());
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////
     //                      DRAW HISTOGRAMS IF NEEDED
@@ -96,9 +96,7 @@ void histHypoTest(const char *dataFileName="./PsD_0.root",
     /////////  REQUIREMENTS: All the histograms must have the same number of bins
     /////////  Note that its objects have a categorization similar to their physical counterparts such as SAMPLE,
     /////////  CHANNEL, MEASURMENT
-    
-    cout<<"3"<<endl;
-    
+        
     HistFactory::Measurement measurement("measurement", "measurement");
     measurement.SetPOI("SigXsecOverSM"); //This Parameter is the same as /mu in profile likelihood. If set to zero it means it is the null hypothesis, and if it is one it is the signal + background. It is also used to fine the exclusion limits, by setting the significance and solving for this parameter.
 
