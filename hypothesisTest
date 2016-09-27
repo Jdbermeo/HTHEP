@@ -13,7 +13,8 @@ bkgHistName=transverse_mass_lumi
 sigHistName=transverse_mass_lumi
 datHistname=transverse_mass_lumi
 
-#Declare what type of calculator will be used to calculate p-values: Asymptotic (Chi2 distribution) or Frequentist (Monte Carlo)
+#Declare what type of calculator will be used to calculate p-values: Asymptotic (Chi2 distribution) or Frequentist (Monte Carlo). Check the "RooStats for Searches" document for a more detailed description on each type of calculator
+
     # type = 0 Freq calculator: Generate toys using nuisance parameter at their conditional ML estimate ( θ = θ_hat) by fitting them to the observed data. Treat constraint terms in the likelihood (e.g. systematic errors) as auxiliary measurements. introduce global observables which will be varied (tossed) for each pseudo-experiment
     #  type = 1 Hybrid calculator: Nuisance parameters are integrated using their pdf (the constraint term) which is interpreted as a Bayesian prior
     #  type = 2 Asymptotic calculator, sólo se puede con one sided limits
@@ -32,7 +33,7 @@ nToys=1000
 
 t_stat_type=2
 
-#Declare the type of statistic to be used on the hypotheses tests for exclusion
+#Declare the type of statistic to be used on the hypotheses tests for exclusion. This is not currently used on the shell script. 
     # t_stat_type_excl = 0 LEP  standard simple likelihood ratio L_{s+b}(mu=1)/L_{b}(mu=0)
     #                  = 1 Tevatron   ratio of profiled likelihood  L_{s+b}(mu=1,nu_hat)/L_{b}(mu=0,nu'_hat)
     #                  = 2 Profile Likelihood two sided  \lambda(mu)=L_{s+b}(mu,nu_hat)/L_{b}(mu_hat,nu'_hat)
@@ -102,20 +103,18 @@ if [ -d "data" ] || [ -d "Data" ]; then #Checks if the directory data exists
 			mkdir pseudoData
 		fi
 
-		#Generate Pseudo Data in results
+		#Add signal and total background signal to treat as the pseudoData in the hypothesis tests
    	     	cd results
 		ls ../signal/*.root > signal_files
 		i=0
 		for j in `cat signal_files`
 		do
 			hadd PD_$i.root bkg.root $j;  
-			root -l -b -q 'generatePseudoData.C("./PD_'$i'.root","'$bkgHistName'",'$n_events_pd',"./PsD_'$i'.root");'
-			rm PD_$i.root
-			arrayData[$i]=./PsD_$i.root
+			arrayData[$i]=./PD_$i.root
 			#echo "The name of pseudo data file number $i is: ${arrayData[$i]} ";
         		i=$(($i+1));
 		done   
-		cp PsD*.root ../pseudoData
+		cp PD*.root ../pseudoData
 	fi
 else
                 #Create directory for pseudoData
@@ -134,13 +133,11 @@ else
                 for j in `cat signal_files`
                 do
                         hadd PD_$i.root bkg.root $j;
-                        root -l -b -q 'generatePseudoData.C("./PD_'$i'.root","'$bkgHistName'",'$n_events_pd',"./PsD_'$i'.root");'
-                        rm PD_$i.root
                         arrayData[$i]=./PsD_$i.root
                         #echo "The name of pseudo data file number $i is: ${arrayData[$i]} ";
                         i=$(($i+1));
                 done
-		cp PsD*.root ../pseudoData
+		cp PD*.root ../pseudoData
 fi
 
 #Carry out the Hypotheses Tests on each of the files. 

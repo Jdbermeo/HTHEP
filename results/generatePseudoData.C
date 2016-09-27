@@ -59,7 +59,7 @@ void generatePseudoData(string fileName="./salida.root",
     gSystem->Load("libRootAuth");
 
     char namePdf[50]; // Array in which we will store the characters to create the pdf that will generate the pseudodata for each bin using the tool factory of the RooWorkSpace class.
-                        // RooWorkSpace is a class to use and create PDFs easily from a single type of object or class. 
+                        // RooWorkSpace is a class to use and create PDFs easily from a single type of object or class.
     
     Double_t n_bini_i; // The content of each bin will be stored in this Double
     
@@ -123,14 +123,15 @@ void generatePseudoData(string fileName="./salida.root",
         if(n_bini_i!=0){
  		
             if(first == 1){
+                //This creates a Gaussian PDF with  n_bini_i as its mean, and sqrt(n_bini_i) as sigma, and with a domain from 0 to 5*n_bini_i
 			n_bini_i = h_pseuDS->GetBinContent(i) ;
 	    		sprintf(namePdf,"Gaussian::p(x[0,%f],mu[%f],sigma[%f])",5.0*n_bini_i,n_bini_i,sqrt(n_bini_i));
-	    		w.factory(namePdf);
+	    		w.factory(namePdf); //this method creates the PDF within the object "w", according to the string defined in the previous line. This creates the PDF
 			first = 0;
             }
 
 		else{
-       		     //Define a Gaussian function with n_bini_i as its mean, and sqrt(n_bini_i) as sigma
+       		     //Change the parameters of the previously created Gaussian PDF with the content of the current bin
             	   	w::x.setMax(5.0*n_bini_i) ;
             		w::mu.setVal(n_bini_i);
             		w::sigma.setVal(sqrt(n_bini_i));
@@ -149,7 +150,7 @@ void generatePseudoData(string fileName="./salida.root",
         	}
         }
         
-        else{ //In the event that the content of the bin is zero, it has to use a diffent method to generate the pseudodata.
+        else{ //In the event that the content of the bin is zero, it leaves the bin empty as in the original histogram
         
      	   }
     }
