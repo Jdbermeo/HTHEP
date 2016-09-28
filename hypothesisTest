@@ -133,7 +133,7 @@ else
                 for j in `cat signal_files`
                 do
                         hadd PD_$i.root bkg.root $j;
-                        arrayData[$i]=./PsD_$i.root
+                        arrayData[$i]=./PD_$i.root
                         #echo "The name of pseudo data file number $i is: ${arrayData[$i]} ";
                         i=$(($i+1));
                 done
